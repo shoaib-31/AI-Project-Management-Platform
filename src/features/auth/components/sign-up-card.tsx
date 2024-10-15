@@ -5,8 +5,15 @@ import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
 import { DottedSeparator } from "@/components/dotted-separator";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import {
   Form,
   FormControl,
@@ -14,17 +21,18 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import Link from "next/link";
 
 const formSchema = z.object({
+  name: z.string().trim().min(1, "Required"),
   email: z.string().min(1, "Required").email(),
-  password: z.string().min(1, "Required").max(256),
+  password: z.string().min(8, "Minimum of 8 characters Required").max(256),
 });
 
-export const SignInCard = () => {
+export const SignUpCard = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
       email: "",
       password: "",
     },
@@ -35,11 +43,41 @@ export const SignInCard = () => {
   return (
     <Card className=" w-full h-full md:w-[486px] border-none shadow-none">
       <CardHeader className=" flex items-center justify-center text-center p-7">
-        <CardTitle className=" text-2xl">Welcome back!</CardTitle>
+        <CardTitle className=" text-2xl">Sign Up</CardTitle>
+        <CardDescription>
+          By signing up, you agree to our{" "}
+          <Link href={"/privacy"}>
+            <span className=" text-blue-700 ">Privacy Policy</span>
+          </Link>{" "}
+          and{" "}
+          <Link href={"/terms"}>
+            <span className=" text-blue-700 ">Terms of Service</span>
+          </Link>
+        </CardDescription>
         <DottedSeparator />
         <CardContent className=" w-full p-7">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className=" space-y-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              action=""
+              className=" space-y-4"
+            >
+              <FormField
+                name="name"
+                control={form.control}
+                render={({ field }) => (
+                  <FormItem className=" flex flex-col items-start">
+                    <FormControl>
+                      <Input
+                        type="text"
+                        placeholder="Enter your name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 name="email"
                 control={form.control}
@@ -64,7 +102,7 @@ export const SignInCard = () => {
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter email address"
+                        placeholder="Enter password"
                         {...field}
                       />
                     </FormControl>
@@ -105,9 +143,9 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className=" w-full p-7 flex justify-center items-center">
-          Already have an account?
-          <Link href="/sign-up">
-            <span className=" text-blue-700">&nbsp;Log In</span>
+          Don&apos;t have an account?
+          <Link href="/sign-in">
+            <span className=" text-blue-700">&nbsp;Sign Up</span>
           </Link>
         </CardContent>
       </CardHeader>
