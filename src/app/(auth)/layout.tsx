@@ -9,7 +9,7 @@ interface AuthLayoutProps {
   children: React.ReactNode;
 }
 
-const AuthLayoutProps = ({ children }: AuthLayoutProps) => {
+const AuthLayout = ({ children }: AuthLayoutProps) => {
   const pathname = usePathname();
   return (
     <main className=" bg-neutral-100 min-h-screen">
@@ -30,4 +30,4 @@ const AuthLayoutProps = ({ children }: AuthLayoutProps) => {
   );
 };
 
-export default AuthLayoutProps;
+export default AuthLayout;
