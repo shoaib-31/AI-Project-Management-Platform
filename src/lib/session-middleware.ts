@@ -12,7 +12,7 @@ import {
   type Users as UsersType,
 } from "node-appwrite";
 import { getCookie } from "hono/cookie";
-import { AUTH_COOKIE } from "@/features/auth/constant";
+import { AUTH_COOKIE } from "@/features/auth/constants";
 
 type AdditionalContext = {
   Variables: {
