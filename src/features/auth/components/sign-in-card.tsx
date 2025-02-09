@@ -106,9 +106,9 @@ export const SignInCard = () => {
           <DottedSeparator />
         </div>
         <CardContent className=" w-full p-7 flex justify-center items-center">
-          Already have an account?
+          Don&apos;t have an account?
           <Link href="/sign-up">
-            <span className=" text-blue-700">&nbsp;Log In</span>
+            <span className=" text-blue-700">&nbsp;Sign Up</span>
           </Link>
         </CardContent>
       </CardHeader>
