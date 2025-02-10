@@ -19,13 +19,15 @@ import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarFallback } from "@radix-ui/react-avatar";
-import { ArrowLeftIcon, ImageIcon } from "lucide-react";
+import { ArrowLeftIcon, CopyIcon, ImageIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Workspace } from "../types";
 import { useUpdateWorkspace } from "../api/use-update-workspace";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useDeleteWorkspace } from "../api/use-delete-workspace";
+import { toast } from "sonner";
+import { useResetInviteCode } from "../api/use-reset-invite-code";
 
 interface UpdateWorkspaceFormProps {
   onCancel?: () => void;
@@ -38,14 +40,35 @@ export const UpdateWorkspaceForm = ({
   onCancel,
   intialValues,
 }: UpdateWorkspaceFormProps) => {
-  const { mutate, isPending } = useUpdateWorkspace();
+  const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const form = useForm<UpdateWorkspaceFormValues>({
+    resolver: zodResolver(updateWorkspaceSchema),
+    defaultValues: {
+      ...intialValues,
+      image: intialValues.imageUrl || "",
+    },
+  });
+  const fullInviteLink = `${window.location.origin}/workspaces/${intialValues.$id}/join/${intialValues.inviteCode}`;
+
+  const { mutate: updateWorkspace, isPending: isUpdatingWorkspace } =
+    useUpdateWorkspace();
   const { mutate: deleteWorkspace, isPending: isDeletingWorkspace } =
     useDeleteWorkspace();
+  const { mutate: resetInviteCode, isPending: isResettingInviteCode } =
+    useResetInviteCode();
+
   const [DeleteDialog, confirmDelete] = useConfirm(
     "Delete Workspace",
     "Are you sure you want to delete this workspace?",
     "destructive"
   );
+  const [ResetDialog, confirmReset] = useConfirm(
+    "Reset Invite Code",
+    "This will invalidate the current invite code. Are you sure you want to continue?",
+    "destructive"
+  );
+
   const handleDelete = async () => {
     const confirmed = await confirmDelete();
     if (!confirmed) return;
@@ -58,22 +81,25 @@ export const UpdateWorkspaceForm = ({
       }
     );
   };
-  const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-  const form = useForm<UpdateWorkspaceFormValues>({
-    resolver: zodResolver(updateWorkspaceSchema),
-    defaultValues: {
-      ...intialValues,
-      image: intialValues.imageUrl || "",
-    },
-  });
+  const handleResetInviteCode = async () => {
+    const confirmed = await confirmReset();
+    if (!confirmed) return;
+    resetInviteCode(
+      { param: { workspaceId: intialValues.$id } },
+      {
+        onSuccess: () => {
+          router.refresh();
+        },
+      }
+    );
+  };
   const onSubmit = (values: UpdateWorkspaceFormValues) => {
     console.log(values);
     const finalValues = {
       ...values,
       image: values.image instanceof File ? values.image : "",
     };
-    mutate(
+    updateWorkspace(
       { form: finalValues, param: { workspaceId: intialValues.$id } },
       {
         onSuccess: ({ data }) => {
@@ -89,9 +115,17 @@ export const UpdateWorkspaceForm = ({
       form.setValue("image", file);
     }
   };
+  const handleCopyInviteLink = () => {
+    navigator.clipboard.writeText(fullInviteLink).then(() => {
+      toast.success("Invite link copied");
+    });
+  };
+  const isPending =
+    isUpdatingWorkspace || isDeletingWorkspace || isResettingInviteCode;
   return (
     <div className="flex flex-col gap-y-4">
       <DeleteDialog />
+      <ResetDialog />
       <Card className=" w-full h-full border-none shadow-none">
         <CardHeader className=" flex flex-row items-center gap-x-4 p-7 space-y-0">
           <Button
@@ -165,7 +199,7 @@ export const UpdateWorkspaceForm = ({
                               ref={inputRef}
                               onChange={handleImageChange}
                               className="hidden"
-                              disabled={isPending || isDeletingWorkspace}
+                              disabled={isPending}
                               accept=".jpg, .png, .jpeg, .svg"
                             />
                             {field.value ? (
@@ -174,7 +208,7 @@ export const UpdateWorkspaceForm = ({
                                 variant="destructive"
                                 size="xs"
                                 className="w-fit mt-2"
-                                disabled={isPending || isDeletingWorkspace}
+                                disabled={isPending}
                                 onClick={() => {
                                   field.onChange("");
                                   if (inputRef.current) {
@@ -209,7 +243,7 @@ export const UpdateWorkspaceForm = ({
                   type="button"
                   size="lg"
                   variant="secondary"
-                  disabled={isPending || isDeletingWorkspace}
+                  disabled={isPending}
                   onClick={onCancel}
                   className={cn(!onCancel && "invisible")}
                 >
@@ -226,17 +260,51 @@ export const UpdateWorkspaceForm = ({
       <Card className="w-full h-full border-none shadow-none">
         <CardContent className=" p-7">
           <div className=" flex flex-col">
-            <h3 className=" font-bold">Danger Zone</h3>
+            <h3 className=" font-bold">Invite Members</h3>
             <p className="text-sm text-muted-foreground">
-              Deleting a workspace is irreversible. All associated data will be
-              lost.
+              Use the link below to invite members to your workspace.
             </p>
+            <div className="mt-4">
+              <div className=" flex items-center gap-x-2">
+                <Input disabled value={fullInviteLink} type="text" />
+                <Button
+                  onClick={handleCopyInviteLink}
+                  variant="secondary"
+                  className="size-12"
+                >
+                  <CopyIcon className="size-5" />
+                </Button>
+              </div>
+            </div>
+            <DottedSeparator className="py-7" />
             <Button
               className="mt-6 w-fit ml-auto "
               size="sm"
               variant="destructive"
               type="button"
-              disabled={isPending || isDeletingWorkspace}
+              disabled={isPending}
+              onClick={handleResetInviteCode}
+            >
+              Reset Invite Link
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="w-full h-full border-none shadow-none">
+        <CardContent className=" p-7">
+          <div className=" flex flex-col">
+            <h3 className=" font-bold">Danger Zone</h3>
+            <p className="text-sm text-muted-foreground">
+              Deleting a workspace is irreversible. All associated data will be
+              lost.
+            </p>
+            <DottedSeparator className="py-7" />
+            <Button
+              className="mt-6 w-fit ml-auto "
+              size="sm"
+              variant="destructive"
+              type="button"
+              disabled={isPending}
               onClick={handleDelete}
             >
               Delete Workspace
