@@ -5,35 +5,35 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 type ResponseType = InferResponseType<
-  (typeof client.api.workspaces)[":workspaceId"]["$patch"],
+  (typeof client.api.projects)[":projectId"]["$patch"],
   200
 >;
 type RequestType = InferRequestType<
-  (typeof client.api.workspaces)[":workspaceId"]["$patch"]
+  (typeof client.api.projects)[":projectId"]["$patch"]
 >;
 
-export const useUpdateWorkspace = () => {
+export const useUpdateProject = () => {
   const query = useQueryClient();
   const router = useRouter();
   const mutation = useMutation<ResponseType, Error, RequestType>({
     mutationFn: async ({ form, param }) => {
-      const response = await client.api.workspaces[":workspaceId"].$patch({
+      const response = await client.api.projects[":projectId"].$patch({
         form,
         param,
       });
       if (!response.ok) {
-        throw new Error("Failed to update workspace");
+        throw new Error("Failed to update project");
       }
       return await response.json();
     },
     onSuccess: ({ data }) => {
-      toast.success("Workspace updated");
+      toast.success("Project updated");
       router.refresh();
-      query.invalidateQueries({ queryKey: ["workspaces"] });
-      query.invalidateQueries({ queryKey: ["workspaces", data.$id] });
+      query.invalidateQueries({ queryKey: ["projects"] });
+      query.invalidateQueries({ queryKey: ["projects", data.$id] });
     },
     onError: () => {
-      toast.error("Failed to create workspace");
+      toast.error("Failed to update project");
     },
   });
   return mutation;

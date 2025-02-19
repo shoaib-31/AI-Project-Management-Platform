@@ -16,10 +16,10 @@ const WorkspaceIdSettingsPage = async ({
   const user = await getCurrent();
   if (!user) redirect("/sign-in");
   const intialValues = await getWorkspace({ workspaceId: params.workspaceId });
-  if (!intialValues) redirect(`/workspaces/${params.workspaceId}`);
+
   return (
     <div className=" w-full lg:max-w-xl">
-      <UpdateWorkspaceForm intialValues={intialValues} />
+      <UpdateWorkspaceForm initialValues={intialValues} />
     </div>
   );
 };
